@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asistente Clínico de Tareas</title>
+    <!-- Cargamos Tailwind CSS para estilos modernos -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Cargamos FontAwesome para los íconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        // Configuramos colores institucionales / clínicos suaves
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        clinica: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            500: '#14b8a6', // Teal suave para encabezados
+                            600: '#0d9488',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Estilos para que el drag and drop (arrastrar) se sienta natural */
+        body { background-color: #f3f4f6; }
+        .columna-kanban { min-height: 200px; }
+        .oculto { display: none; }
+    </style>
+</head>
+<body class="text-gray-800 font-sans antialiased">
+
+    <!-- Encabezado -->
+    <header class="bg-clinica-500 text-white shadow-md py-4 px-6 sticky top-0 z-10 flex justify-between items-center">
+        <h1 class="text-xl font-bold"><i class="fa-solid fa-stethoscope mr-2"></i> Gestión de Tareas</h1>
+        <button onclick="cargarTareas()" class="bg-clinica-600 hover:bg-clinica-700 p-2 rounded-full transition">
+            <i class="fa-solid fa-rotate-right"></i>
+        </button>
+    </header>
+
+    <!-- Indicador de Carga -->
+    <div id="cargando" class="text-center py-10">
+        <i class="fa-solid fa-spinner fa-spin text-4xl text-clinica-500"></i>
+        <p class="mt-2 text-gray-500">Sincronizando tareas...</p>
+    </div>
+
+    <!-- Tablero Kanban -->
+    <main id="tablero" class="p-4 grid grid-cols-1 md:grid-cols-3 gap-6 oculto">
+        
+        <!-- Columna: Pendiente -->
+        <div class="bg-white rounded-lg shadow p-4 border-t-4 border-red-400">
+            <h2 class="font-bold text-gray-700 mb-4 flex justify-between">
+                Pendientes <span id="contador-pendiente" class="bg-gray-200 text-gray-600 text-xs py-1 px-2 rounded-full">0</span>
+            </h2>
+            <div id="columna-pendiente" class="columna-kanban flex flex-col gap-3"></div>
+        </div>
+
+        <!-- Columna: En Progreso -->
+        <div class="bg-white rounded-lg shadow p-4 border-t-4 border-yellow-400">
+            <h2 class="font-bold text-gray-700 mb-4 flex justify-between">
+                En Progreso <span id="contador-progreso" class="bg-gray-200 text-gray-600 text-xs py-1 px-2 rounded-full">0</span>
+            </h2>
+            <div id="columna-en-progreso" class="columna-kanban flex flex-col gap-3"></div>
+        </div>
+
+        <!-- Columna: Completado -->
+        <div class="bg-white rounded-lg shadow p-4 border-t-4 border-clinica-500">
+            <h2 class="font-bold text-gray-700 mb-4 flex justify-between">
+                Completadas <span id="contador-completado" class="bg-gray-200 text-gray-600 text-xs py-1 px-2 rounded-full">0</span>
+            </h2>
+            <div id="columna-completado" class="columna-kanban flex flex-col gap-3"></div>
+        </div>
+
+    </main>
+
+    <script>
+        // ==========================================
+        // ¡ATENCIÓN! PEGA AQUÍ TU URL DE APPS SCRIPT
+        // ==========================================
+        const API_URL = 'https://script.google.com/macros/s/AKfycbzj36pxcGgSo06e6XJ9jLU7gBtsOxGrguo6T0ttO189h72_Tk0JOMRfXaD3VhaHquCSEg/exec';
+
+        async function cargarTareas() {
+            document.getElementById('cargando').classList.remove('oculto');
+            document.getElementById('tablero').classList.add('oculto');
+            
+            try {
+                const respuesta = await fetch(API_URL);
+                const tareas = await respuesta.json();
+                renderizarTareas(tareas);
+            } catch (error) {
+                alert("Error de conexión. Revisa tu internet o la URL de la API.");
+            }
+            
+            document.getElementById('cargando').classList.add('oculto');
+            document.getElementById('tablero').classList.remove('oculto');
+        }
+
+        function renderizarTareas(tareas) {
+            // Limpiar columnas
+            document.getElementById('columna-pendiente').innerHTML = '';
+            document.getElementById('columna-en-progreso').innerHTML = '';
+            document.getElementById('columna-completado').innerHTML = '';
+            
+            let contadores = { 'Pendiente': 0, 'En Progreso': 0, 'Completado': 0 };
+
+            tareas.forEach(tarea => {
+                if (!tarea.ID) return; // Si la fila está vacía, saltarla
+                
+                const estadoActual = tarea.Estado ? tarea.Estado.trim() : 'Pendiente';
+                contadores[estadoActual] = (contadores[estadoActual] || 0) + 1;
+
+                // Definir colores según prioridad
+                let colorPrioridad = 'bg-gray-100 text-gray-600';
+                if (tarea.Prioridad === 'Alta') colorPrioridad = 'bg-red-100 text-red-700 border border-red-200';
+                if (tarea.Prioridad === 'Media') colorPrioridad = 'bg-yellow-100 text-yellow-700 border border-yellow-200';
+                if (tarea.Prioridad === 'Baja') colorPrioridad = 'bg-green-100 text-green-700 border border-green-200';
+
+                // Botón de WhatsApp interactivo
+                let botonWhatsApp = '';
+                if (tarea.Clasificacion === 'Mensaje a Colega' && tarea['Borrador de Mensaje']) {
+                    const enlaceWsp = `https://wa.me/?text=${encodeURIComponent(tarea['Borrador de Mensaje'])}`;
+                    botonWhatsApp = `
+                        <a href="${enlaceWsp}" target="_blank" class="mt-3 block w-full text-center bg-green-500 hover:bg-green-600 text-white text-sm font-semibold py-2 rounded-lg transition shadow-sm">
+                            <i class="fa-brands fa-whatsapp mr-1"></i> Enviar Mensaje
+                        </a>
+                    `;
+                }
+
+                // Generar controles de estado
+                let botonesEstado = `
+                    <div class="mt-3 flex justify-between border-t pt-2 gap-2">
+                        <button onclick="cambiarEstado('${tarea.ID}', 'Pendiente')" class="text-xs flex-1 py-1 rounded ${estadoActual === 'Pendiente' ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-500'}">Pendiente</button>
+                        <button onclick="cambiarEstado('${tarea.ID}', 'En Progreso')" class="text-xs flex-1 py-1 rounded ${estadoActual === 'En Progreso' ? 'bg-yellow-400 text-gray-800' : 'bg-gray-100 text-gray-500'}">Proceso</button>
+                        <button onclick="cambiarEstado('${tarea.ID}', 'Completado')" class="text-xs flex-1 py-1 rounded ${estadoActual === 'Completado' ? 'bg-clinica-500 text-white' : 'bg-gray-100 text-gray-500'}">Listo</button>
+                    </div>
+                `;
+
+                const tarjeta = `
+                    <div class="bg-white border border-gray-100 shadow-sm rounded-xl p-4 transition hover:shadow-md">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-xs font-bold px-2 py-1 rounded-md ${colorPrioridad}">${tarea.Prioridad || 'Normal'}</span>
+                            <span class="text-xs text-gray-400"><i class="fa-solid fa-tag"></i> ${tarea.Clasificacion || 'General'}</span>
+                        </div>
+                        <p class="text-sm text-gray-800 font-medium my-2">${tarea['Audio Transcrito'] || 'Sin descripción'}</p>
+                        ${botonWhatsApp}
+                        ${botonesEstado}
+                    </div>
+                `;
+
+                // Insertar en la columna correcta
+                let columnaDestino = document.getElementById('columna-pendiente');
+                if (estadoActual === 'En Progreso') columnaDestino = document.getElementById('columna-en-progreso');
+                if (estadoActual === 'Completado') columnaDestino = document.getElementById('columna-completado');
+                
+                columnaDestino.innerHTML += tarjeta;
+            });
+
+            // Actualizar números
+            document.getElementById('contador-pendiente').innerText = contadores['Pendiente'] || 0;
+            document.getElementById('contador-progreso').innerText = contadores['En Progreso'] || 0;
+            document.getElementById('contador-completado').innerText = contadores['Completado'] || 0;
+        }
+
+        async function cambiarEstado(id, nuevoEstado) {
+            // Animación visual de cargando en el cursor
+            document.body.style.cursor = 'wait';
+            
+            try {
+                await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        id: id,
+                        estado: nuevoEstado
+                    })
+                });
+                // Recargar tablero para ver el cambio
+                cargarTareas();
+            } catch (error) {
+                alert("Hubo un error al actualizar la tarea.");
+            } finally {
+                document.body.style.cursor = 'default';
+            }
+        }
+
+        // Cargar tareas al abrir la página
+        window.onload = cargarTareas;
+    </script>
+</body>
+</html>
