@@ -16,8 +16,9 @@
         .columna-kanban { min-height: 250px; padding-bottom: 2rem; }
         .tarjeta-tarea { transition: all 0.2s ease; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
         .tarjeta-tarea:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.08); }
+        /* Efectos visuales de arrastre */
         .sortable-ghost { opacity: 0.5; background-color: #f1f5f9; border: 2px dashed #94a3b8; border-radius: 0.75rem; }
-        .sortable-drag { cursor: grabbing !important; }
+        .sortable-drag { cursor: grabbing !important; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important; transform: scale(1.02); }
         .oculto { display: none !important; }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -27,7 +28,6 @@
 </head>
 <body class="text-gray-800 font-sans antialiased h-screen flex flex-col overflow-hidden">
 
-    <!-- Navbar -->
     <header class="bg-gradient-to-r from-clinica-600 to-clinica-400 text-white shadow-lg py-4 px-5 shrink-0 mx-2 mt-2 rounded-2xl relative overflow-hidden">
         <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white opacity-10 rounded-full blur-xl"></div>
         
@@ -41,7 +41,6 @@
             </div>
             
             <div class="flex gap-2">
-                <!-- NUEVO BOTÓN: Añadir Tarea -->
                 <button onclick="abrirModalNueva()" class="bg-white/20 hover:bg-white/30 backdrop-blur-sm px-4 py-2.5 rounded-xl transition text-sm shadow-sm font-semibold flex items-center gap-2">
                     <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline">Nueva Tarea</span>
                 </button>
@@ -65,7 +64,6 @@
         </div>
     </header>
 
-    <!-- Modal NUEVA TAREA -->
     <div id="modal-nueva" class="fixed inset-0 bg-slate-900/40 z-50 flex justify-center items-center oculto backdrop-blur-sm">
         <div class="bg-white rounded-2xl shadow-2xl w-11/12 md:w-96 p-6 transform transition-all border border-gray-100">
             <h3 class="text-lg font-bold text-gray-800 mb-5 flex items-center"><div class="bg-clinica-100 text-clinica-600 p-2 rounded-lg mr-3"><i class="fa-solid fa-plus"></i></div> Añadir Tarea</h3>
@@ -96,7 +94,6 @@
         </div>
     </div>
 
-    <!-- Modal de EDICIÓN -->
     <div id="modal-edicion" class="fixed inset-0 bg-slate-900/40 z-50 flex justify-center items-center oculto backdrop-blur-sm">
         <div class="bg-white rounded-2xl shadow-2xl w-11/12 md:w-96 p-6 transform transition-all border border-gray-100">
             <h3 class="text-lg font-bold text-gray-800 mb-5 flex items-center"><div class="bg-clinica-100 text-clinica-600 p-2 rounded-lg mr-3"><i class="fa-solid fa-pen-to-square"></i></div> Editar Detalle</h3>
@@ -119,13 +116,11 @@
         </div>
     </div>
 
-    <!-- Indicador de Carga -->
     <div id="cargando" class="flex-1 flex flex-col justify-center items-center">
         <div class="bg-white p-4 rounded-full shadow-lg mb-4"><i class="fa-solid fa-spinner fa-spin text-3xl text-clinica-500"></i></div>
         <p class="text-gray-500 font-medium animate-pulse">Sincronizando tareas...</p>
     </div>
 
-    <!-- Tablero Kanban -->
     <main id="tablero" class="flex-1 overflow-y-auto p-4 grid grid-cols-1 md:grid-cols-3 gap-5 oculto items-start">
         <div class="bg-gray-100/80 rounded-2xl p-4 border border-gray-200/60 flex flex-col max-h-full backdrop-blur-sm">
             <h2 class="font-bold text-gray-700 mb-4 px-1 flex justify-between items-center text-sm uppercase tracking-wider">
@@ -151,11 +146,9 @@
     </main>
 
     <script>
-        // ==========================================
-        // PEGA AQUÍ TU URL LARGA DE APPS SCRIPT
+        // ¡Tu enlace oficial incrustado directamente!
         const API_URL = 'https://script.google.com/macros/s/AKfycbzj36pxcGgSo06e6XJ9jLU7gBtsOxGrguo6T0ttO189h72_Tk0JOMRfXaD3VhaHquCSEg/exec';
-        // ==========================================
-
+        
         let todasLasTareas = [];
 
         async function cargarTareas() {
@@ -180,7 +173,6 @@
             const textoBusqueda = document.getElementById('buscador').value.toLowerCase();
             const categoriaFiltro = document.getElementById('filtro-categoria').value;
 
-            // Ordenamos para que las más recientes (las agregadas manuales) aparezcan arriba
             const tareasInvertidas = [...todasLasTareas].reverse();
 
             tareasInvertidas.forEach(tarea => {
@@ -235,10 +227,18 @@
             document.getElementById('contador-completado').innerText = contadores['Completado'] || 0;
         }
 
-        // --- SISTEMA DE ARRASTRE ---
+        // --- SISTEMA DE ARRASTRE OPTIMIZADO PARA MÓVILES ---
         function inicializarDragAndDrop() {
             const configuracion = {
-                group: 'kanban', animation: 250, ghostClass: 'sortable-ghost', dragClass: 'sortable-drag',
+                group: 'kanban', 
+                animation: 250, 
+                ghostClass: 'sortable-ghost', 
+                dragClass: 'sortable-drag',
+                
+                // Estas dos líneas solucionan el problema del scroll en celulares:
+                delay: 200, // Requiere mantener presionado 200ms para arrastrar
+                delayOnTouchOnly: true, // Solo aplica el retraso en pantallas táctiles
+                
                 onEnd: function (evt) {
                     const idTarea = evt.item.getAttribute('data-id');
                     let nuevoEstado = 'Pendiente';
@@ -283,10 +283,10 @@
                 clasificacion: document.getElementById('add-clasificacion').value,
                 prioridad: document.getElementById('add-prioridad').value
             });
-            cargarTareas(); // Recargamos para que aparezca
+            cargarTareas(); 
         }
 
-        // --- LÓGICA DE EDICIÓN ---
+        // --- LÓGICA DE EDICIÓN CORREGIDA ---
         function abrirModalEdicion(id, descripcion, prioridad) {
             document.getElementById('edit-id').value = id;
             document.getElementById('edit-descripcion').value = descripcion;
@@ -302,12 +302,14 @@
             const nuevaPrio = document.getElementById('edit-prioridad').value;
             cerrarModalEdicion();
             
-            const tareaIndex = todasLasTareas.findIndex(t => t.ID === id);
+            // Solución: Aseguramos que ambos IDs se comparen como texto (String)
+            const tareaIndex = todasLasTareas.findIndex(t => String(t.ID) === String(id));
             if (tareaIndex > -1) {
                 todasLasTareas[tareaIndex]['Audio Transcrito'] = nuevaDesc;
                 todasLasTareas[tareaIndex].Prioridad = nuevaPrio;
-                renderizarTareas();
+                renderizarTareas(); // Se refleja instantáneamente
             }
+            
             await actualizarDatosBase({ action: 'edit', id: id, descripcion: nuevaDesc, prioridad: nuevaPrio });
         }
 
@@ -323,7 +325,6 @@
             }
         }
 
-        // --- COMUNICACIÓN CON LA API ---
         async function actualizarDatosBase(payload) {
             try {
                 await fetch(API_URL, { 
