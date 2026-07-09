@@ -4,20 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0d9488">
-    <link rel="manifest" href="manifest.json">
-    
     <title>Asistente Clínico</title>
     
-    <script>
-        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
-    </script>
-
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -25,13 +14,11 @@
     
     <script>
         tailwind.config = {
-            darkMode: 'class',
             theme: { extend: { fontFamily: { sans: ['Poppins', 'sans-serif'] }, colors: { clinica: { 50: '#f0fdfa', 100: '#ccfbf1', 400: '#2dd4bf', 500: '#14b8a6', 600: '#0d9488', 700: '#0f766e' } } } }
         }
     </script>
     <style>
-        body { background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); transition: background 0.3s ease; }
-        .dark body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+        body { background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); }
         .columna-kanban { min-height: 250px; padding-bottom: 5rem; }
         .sortable-ghost { opacity: 0.4; border: 2px dashed #94a3b8; border-radius: 0.75rem; }
         .sortable-drag { cursor: grabbing !important; transform: scale(1.03) rotate(2deg); }
@@ -39,68 +26,308 @@
         ::-webkit-scrollbar { width: 0px; background: transparent; } 
     </style>
 </head>
-<body class="text-gray-800 dark:text-gray-100 font-sans antialiased h-screen flex flex-col overflow-hidden pb-16 md:pb-0">
+<body class="text-gray-800 font-sans antialiased h-screen flex flex-col overflow-hidden pb-16 md:pb-0">
 
-    <header class="bg-gradient-to-r from-clinica-600 to-clinica-400 text-white shadow-lg py-4 px-5 shrink-0 md:mx-2 md:mt-2 md:rounded-2xl relative overflow-hidden z-20">
+    <header class="bg-gradient-to-r from-clinica-600 to-clinica-400 text-white shadow-lg py-4 px-5 shrink-0 md:mx-2 md:mt-2 md:rounded-2xl relative z-20">
         <div class="flex justify-between items-center relative z-10">
             <div class="flex items-center gap-3">
-                <div class="bg-white/20 p-2 rounded-xl backdrop-blur-sm"><i class="fa-solid fa-brain text-2xl"></i></div>
+                <div class="bg-white/20 p-2 rounded-xl"><i class="fa-solid fa-brain text-2xl"></i></div>
                 <div>
                     <h1 class="text-xl font-bold tracking-wide leading-tight">Asistente Clínico</h1>
                     <p class="text-clinica-50 text-xs font-medium opacity-90">Gestor de Pendientes</p>
                 </div>
             </div>
             
-            <div class="flex gap-2 items-center">
-                <button onclick="toggleTema()" class="bg-white/20 hover:bg-white/30 p-2.5 rounded-xl transition text-sm shadow-sm flex items-center justify-center w-10 h-10" title="Cambiar Tema">
-                    <i id="icono-tema" class="fa-solid fa-moon"></i>
+            <div class="hidden md:flex gap-2">
+                <button onclick="abrirModalNueva()" class="bg-white/20 hover:bg-white/30 px-4 py-2.5 rounded-xl transition text-sm font-semibold flex items-center gap-2">
+                    <i class="fa-solid fa-plus"></i> Nueva Tarea
                 </button>
-                <div class="hidden md:flex gap-2">
-                    <button onclick="verHistorial()" class="bg-white/20 hover:bg-white/30 px-4 py-2.5 rounded-xl transition text-sm shadow-sm font-semibold flex items-center gap-2">
-                        <i class="fa-solid fa-box-archive"></i> Historial
-                    </button>
-                    <button onclick="abrirModalNueva()" class="bg-white/20 hover:bg-white/30 px-4 py-2.5 rounded-xl transition text-sm shadow-sm font-semibold flex items-center gap-2">
-                        <i class="fa-solid fa-plus"></i> Nueva Tarea
-                    </button>
-                    <button onclick="cargarTareas()" class="bg-white/20 hover:bg-white/30 p-2.5 rounded-xl transition shadow-sm w-10 h-10 flex items-center justify-center" title="Sincronizar">
-                        <i class="fa-solid fa-rotate-right"></i>
-                    </button>
-                </div>
+                <button onclick="cargarTareas()" class="bg-white/20 hover:bg-white/30 p-2.5 rounded-xl transition w-10 h-10 flex items-center justify-center">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
             </div>
         </div>
         <div class="mt-4 relative z-10">
             <i class="fa-solid fa-magnifying-glass absolute left-4 top-3 text-gray-400 text-sm"></i>
-            <input type="text" id="buscador" onkeyup="filtrarVista()" placeholder="Buscar paciente o detalle..." class="w-full pl-11 pr-4 py-2.5 rounded-xl text-gray-700 dark:text-gray-200 dark:bg-slate-800 bg-white/95 focus:outline-none shadow-inner transition">
+            <input type="text" id="buscador" onkeyup="filtrarVista()" placeholder="Buscar paciente o detalle..." class="w-full pl-11 pr-4 py-2.5 rounded-xl text-gray-700 bg-white/95 focus:outline-none shadow-inner transition">
         </div>
     </header>
 
     <div id="cargando" class="flex-1 flex flex-col justify-center items-center z-0">
-        <div class="bg-white dark:bg-slate-800 p-4 rounded-full shadow-lg mb-4"><i class="fa-solid fa-spinner fa-spin text-3xl text-clinica-500"></i></div>
-        <p class="text-gray-500 font-medium animate-pulse mt-2">Cargando...</p>
+        <div class="bg-white p-4 rounded-full shadow-lg mb-4"><i class="fa-solid fa-spinner fa-spin text-3xl text-clinica-500"></i></div>
+        <p class="text-gray-500 font-medium animate-pulse mt-2">Cargando tareas...</p>
     </div>
 
     <main id="tablero" class="flex-1 overflow-y-auto p-4 grid grid-cols-1 md:grid-cols-3 gap-5 oculto items-start">
-        <div class="bg-gray-100/80 dark:bg-slate-800/80 rounded-2xl p-4 border border-gray-200/60 dark:border-slate-700 flex flex-col max-h-full backdrop-blur-sm transition-colors duration-300">
-            <h2 class="font-bold text-gray-700 dark:text-gray-300 mb-4 px-1 flex justify-between items-center text-sm uppercase tracking-wider">
-                Pendientes <span id="contador-pendiente" class="bg-white dark:bg-slate-700 shadow-sm text-clinica-600 dark:text-clinica-400 text-xs py-1 px-2.5 rounded-full font-bold">0</span>
+        <div class="bg-gray-100/80 rounded-2xl p-4 border border-gray-200/60 flex flex-col max-h-full">
+            <h2 class="font-bold text-gray-700 mb-4 px-1 flex justify-between items-center text-sm uppercase tracking-wider">
+                Pendientes <span id="contador-pendiente" class="bg-white shadow-sm text-clinica-600 text-xs py-1 px-2.5 rounded-full font-bold">0</span>
             </h2>
             <div id="columna-pendiente" class="columna-kanban flex flex-col gap-3.5 overflow-y-auto pr-1"></div>
         </div>
-        <div class="bg-gray-100/80 dark:bg-slate-800/80 rounded-2xl p-4 border border-gray-200/60 dark:border-slate-700 flex flex-col max-h-full backdrop-blur-sm transition-colors duration-300">
-            <h2 class="font-bold text-gray-700 dark:text-gray-300 mb-4 px-1 flex justify-between items-center text-sm uppercase tracking-wider">
-                En Progreso <span id="contador-progreso" class="bg-white dark:bg-slate-700 shadow-sm text-yellow-600 text-xs py-1 px-2.5 rounded-full font-bold">0</span>
+        <div class="bg-gray-100/80 rounded-2xl p-4 border border-gray-200/60 flex flex-col max-h-full">
+            <h2 class="font-bold text-gray-700 mb-4 px-1 flex justify-between items-center text-sm uppercase tracking-wider">
+                En Progreso <span id="contador-progreso" class="bg-white shadow-sm text-yellow-600 text-xs py-1 px-2.5 rounded-full font-bold">0</span>
             </h2>
             <div id="columna-en-progreso" class="columna-kanban flex flex-col gap-3.5 overflow-y-auto pr-1"></div>
         </div>
-        <div class="bg-gray-100/80 dark:bg-slate-800/80 rounded-2xl p-4 border border-gray-200/60 dark:border-slate-700 flex flex-col max-h-full relative backdrop-blur-sm transition-colors duration-300">
+        <div class="bg-gray-100/80 rounded-2xl p-4 border border-gray-200/60 flex flex-col max-h-full relative">
             <div class="flex justify-between items-center mb-4 px-1">
-                <h2 class="font-bold text-gray-700 dark:text-gray-300 flex items-center text-sm uppercase tracking-wider">
-                    Completadas <span id="contador-completado" class="ml-2 bg-white dark:bg-slate-700 shadow-sm text-green-600 dark:text-green-400 text-xs py-1 px-2.5 rounded-full font-bold">0</span>
+                <h2 class="font-bold text-gray-700 flex items-center text-sm uppercase tracking-wider">
+                    Completadas <span id="contador-completado" class="ml-2 bg-white shadow-sm text-green-600 text-xs py-1 px-2.5 rounded-full font-bold">0</span>
                 </h2>
-                <button onclick="archivarCompletadas()" class="text-[11px] font-bold uppercase tracking-wide text-clinica-600 dark:text-clinica-400 bg-clinica-100 dark:bg-slate-700 hover:bg-clinica-200 dark:hover:bg-slate-600 px-3 py-1.5 rounded-lg transition">Limpiar</button>
+                <button onclick="archivarCompletadas()" class="text-[11px] font-bold uppercase tracking-wide text-clinica-600 bg-clinica-100 hover:bg-clinica-200 px-3 py-1.5 rounded-lg transition">Limpiar</button>
             </div>
             <div id="columna-completado" class="columna-kanban flex flex-col gap-3.5 overflow-y-auto pr-1"></div>
         </div>
     </main>
 
-    <main id="vista-historial" class="flex-1 overflow-y-auto p-4 oculto bg-white/50 dark:bg-slate-900/5
+    <nav class="md:hidden fixed bottom-0 w-full bg-white border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-30">
+        <div class="flex justify-around items-center p-3">
+            <button onclick="cargarTareas()" class="flex flex-col items-center text-gray-500 hover:text-clinica-500 w-16 transition">
+                <i class="fa-solid fa-rotate-right text-xl mb-1"></i>
+                <span class="text-[10px] font-medium">Actualizar</span>
+            </button>
+            <button onclick="abrirModalNueva()" class="flex flex-col items-center justify-center -mt-8 bg-gradient-to-r from-clinica-500 to-clinica-600 text-white rounded-full w-14 h-14 shadow-lg border-4 border-white transform active:scale-95 transition">
+                <i class="fa-solid fa-plus text-2xl"></i>
+            </button>
+            <div class="w-16"></div> </div>
+    </nav>
+
+    <div id="modal-nueva" class="fixed inset-0 bg-slate-900/60 z-50 flex justify-center items-end md:items-center oculto backdrop-blur-sm transition-all">
+        <div class="bg-white rounded-t-3xl md:rounded-2xl shadow-2xl w-full md:w-96 p-6 pb-10 md:pb-6">
+            <div class="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-5 md:hidden"></div>
+            <h3 class="text-lg font-bold text-gray-800 mb-5 flex items-center"><div class="bg-clinica-100 text-clinica-600 p-2 rounded-lg mr-3"><i class="fa-solid fa-plus"></i></div> Nueva Tarea</h3>
+            
+            <label class="block text-sm font-semibold mb-1.5 text-gray-700">Descripción</label>
+            <textarea id="add-descripcion" rows="3" class="w-full mb-4 border-gray-200 rounded-xl p-3 bg-gray-50 border focus:ring-2 focus:ring-clinica-400 focus:outline-none transition resize-none" placeholder="Ej: Redactar informe..."></textarea>
+            
+            <div class="flex gap-3 mb-6">
+                <div class="flex-1">
+                    <label class="block text-sm font-semibold mb-1.5 text-gray-700">Categoría</label>
+                    <select id="add-clasificacion" class="w-full border-gray-200 rounded-xl p-2.5 bg-gray-50 border focus:outline-none">
+                        <option value="Informes">Informes</option>
+                        <option value="Fichas">Fichas</option>
+                        <option value="Mensaje a Colega">Mensaje</option>
+                        <option value="General">General</option>
+                    </select>
+                </div>
+                <div class="flex-1">
+                    <label class="block text-sm font-semibold mb-1.5 text-gray-700">Prioridad</label>
+                    <select id="add-prioridad" class="w-full border-gray-200 rounded-xl p-2.5 bg-gray-50 border focus:outline-none">
+                        <option value="Alta">Alta</option>
+                        <option value="Media" selected>Media</option>
+                        <option value="Baja">Baja</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="flex justify-end gap-3">
+                <button onclick="cerrarModalNueva()" class="px-5 py-3 md:py-2.5 text-gray-600 font-medium bg-gray-100 hover:bg-gray-200 rounded-xl w-full md:w-auto transition">Cancelar</button>
+                <button onclick="guardarNueva()" class="px-5 py-3 md:py-2.5 bg-gradient-to-r from-clinica-500 to-clinica-600 hover:from-clinica-600 hover:to-clinica-700 text-white font-medium rounded-xl shadow-md w-full md:w-auto transition">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-edicion" class="fixed inset-0 bg-slate-900/60 z-50 flex justify-center items-end md:items-center oculto backdrop-blur-sm transition-all">
+        <div class="bg-white rounded-t-3xl md:rounded-2xl shadow-2xl w-full md:w-96 p-6 pb-10 md:pb-6">
+            <div class="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-5 md:hidden"></div>
+            <h3 class="text-lg font-bold text-gray-800 mb-5 flex items-center"><div class="bg-clinica-100 text-clinica-600 p-2 rounded-lg mr-3"><i class="fa-solid fa-pen-to-square"></i></div> Editar Tarea</h3>
+            <input type="hidden" id="edit-id">
+            
+            <label class="block text-sm font-semibold mb-1.5 text-gray-700">Descripción</label>
+            <textarea id="edit-descripcion" rows="3" class="w-full mb-4 border-gray-200 rounded-xl p-3 bg-gray-50 border focus:ring-2 focus:ring-clinica-400 focus:outline-none transition resize-none"></textarea>
+            
+            <div class="flex gap-3 mb-6">
+                <div class="flex-1">
+                    <label class="block text-sm font-semibold mb-1.5 text-gray-700">Estado</label>
+                    <select id="edit-estado" class="w-full border-gray-200 rounded-xl p-2.5 bg-gray-50 border focus:outline-none">
+                        <option value="Pendiente">Pendiente</option>
+                        <option value="En Progreso">En Progreso</option>
+                        <option value="Completado">Completado</option>
+                    </select>
+                </div>
+                <div class="flex-1">
+                    <label class="block text-sm font-semibold mb-1.5 text-gray-700">Prioridad</label>
+                    <select id="edit-prioridad" class="w-full border-gray-200 rounded-xl p-2.5 bg-gray-50 border focus:outline-none">
+                        <option value="Alta">Alta</option>
+                        <option value="Media">Media</option>
+                        <option value="Baja">Baja</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="flex justify-end gap-3">
+                <button onclick="cerrarModalEdicion()" class="px-5 py-3 md:py-2.5 text-gray-600 font-medium bg-gray-100 hover:bg-gray-200 rounded-xl w-full md:w-auto transition">Cancelar</button>
+                <button onclick="guardarEdicion()" class="px-5 py-3 md:py-2.5 bg-gradient-to-r from-clinica-500 to-clinica-600 text-white font-medium rounded-xl shadow-md w-full md:w-auto transition">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://script.google.com/macros/s/AKfycbzj36pxcGgSo06e6XJ9jLU7gBtsOxGrguo6T0ttO189h72_Tk0JOMRfXaD3VhaHquCSEg/exec';
+        let todasLasTareas = [];
+
+        async function cargarTareas() {
+            document.getElementById('cargando').classList.remove('oculto');
+            document.getElementById('tablero').classList.add('oculto');
+            
+            try {
+                const respuesta = await fetch(API_URL);
+                todasLasTareas = await respuesta.json();
+                renderizarTareas();
+                inicializarDragAndDrop();
+            } catch (error) { 
+                console.error("Error al cargar:", error);
+                alert("Hubo un error cargando las tareas. Revisa tu conexión o presiona F12 para ver la Consola.");
+            }
+            
+            document.getElementById('cargando').classList.add('oculto');
+            document.getElementById('tablero').classList.remove('oculto');
+        }
+
+        function renderizarTareas() {
+            document.getElementById('columna-pendiente').innerHTML = '';
+            document.getElementById('columna-en-progreso').innerHTML = '';
+            document.getElementById('columna-completado').innerHTML = '';
+            
+            let contadores = { 'Pendiente': 0, 'En Progreso': 0, 'Completado': 0 };
+            const filtro = document.getElementById('buscador').value.toLowerCase();
+
+            [...todasLasTareas].reverse().forEach(tarea => {
+                if (!tarea.ID || tarea.Estado === 'Archivado') return; 
+                
+                const desc = (tarea['Audio Transcrito'] || '').toLowerCase();
+                if (filtro && !desc.includes(filtro)) return;
+
+                const estado = tarea.Estado ? tarea.Estado.trim() : 'Pendiente';
+                contadores[estado] = (contadores[estado] || 0) + 1;
+
+                let cPrio = 'bg-slate-100 text-slate-600';
+                let dec = 'bg-slate-300';
+                if (tarea.Prioridad === 'Alta') { cPrio = 'bg-red-50 text-red-600'; dec = 'bg-red-500'; }
+                if (tarea.Prioridad === 'Media') { cPrio = 'bg-orange-50 text-orange-600'; dec = 'bg-orange-400'; }
+                if (tarea.Prioridad === 'Baja') { cPrio = 'bg-emerald-50 text-emerald-600'; dec = 'bg-emerald-500'; }
+
+                let bWsp = '';
+                if (tarea.Clasificacion === 'Mensaje a Colega' && tarea['Borrador de Mensaje']) {
+                    bWsp = `<div class="mt-3 pt-3 border-t border-gray-100"><a href="https://wa.me/?text=${encodeURIComponent(tarea['Borrador de Mensaje'])}" target="_blank" class="flex items-center justify-center gap-2 w-full bg-green-50 hover:bg-green-100 text-green-700 font-medium py-2 rounded-xl text-sm transition"><i class="fa-brands fa-whatsapp text-lg"></i> Enviar WhatsApp</a></div>`;
+                }
+
+                const safeDesc = (tarea['Audio Transcrito'] || '').replace(/'/g, "\\'").replace(/"/g, '&quot;'); 
+                
+                const tarjeta = `
+                    <div data-id="${tarea.ID}" class="bg-white rounded-xl p-4 shadow-sm relative overflow-hidden mb-3 border border-gray-100 group transition">
+                        <div class="absolute left-0 top-0 bottom-0 w-1.5 ${dec}"></div>
+                        
+                        <button onclick="abrirModalEdicion('${tarea.ID}', '${safeDesc}', '${tarea.Prioridad}', '${estado}')" class="absolute right-2 top-3 text-gray-400 hover:text-clinica-500 p-2 transition opacity-100 md:opacity-0 group-hover:opacity-100">
+                            <i class="fa-solid fa-pen text-sm"></i>
+                        </button>
+                        
+                        <div class="flex justify-between items-start mb-2 pl-2 pr-6">
+                            <span class="text-[10px] font-bold px-2 py-1 rounded-md uppercase ${cPrio}">${tarea.Prioridad || 'Normal'}</span>
+                        </div>
+                        <div class="pl-2">
+                            <div class="text-[11px] text-clinica-600 font-semibold mb-1 flex items-center gap-1.5"><i class="fa-solid fa-tag"></i> ${tarea.Clasificacion || 'General'}</div>
+                            <p class="text-sm text-gray-700 font-medium leading-relaxed">${tarea['Audio Transcrito'] || 'Sin descripción'}</p>
+                            ${bWsp}
+                        </div>
+                    </div>`;
+
+                let col = 'columna-pendiente';
+                if (estado === 'En Progreso') col = 'columna-en-progreso';
+                if (estado === 'Completado') col = 'columna-completado';
+                document.getElementById(col).innerHTML += tarjeta;
+            });
+
+            document.getElementById('contador-pendiente').innerText = contadores['Pendiente'] || 0;
+            document.getElementById('contador-progreso').innerText = contadores['En Progreso'] || 0;
+            document.getElementById('contador-completado').innerText = contadores['Completado'] || 0;
+        }
+
+        function inicializarDragAndDrop() {
+            const config = {
+                group: 'kanban', animation: 250, delay: 200, delayOnTouchOnly: true, ghostClass: 'sortable-ghost', dragClass: 'sortable-drag',
+                onEnd: function (evt) {
+                    if (evt.from.id !== evt.to.id) {
+                        if (navigator.vibrate) navigator.vibrate(50);
+                        const id = evt.item.getAttribute('data-id');
+                        let estado = 'Pendiente';
+                        if (evt.to.id === 'columna-en-progreso') estado = 'En Progreso';
+                        if (evt.to.id === 'columna-completado') estado = 'Completado';
+                        
+                        const tIndex = todasLasTareas.findIndex(t => String(t.ID) === String(id));
+                        if(tIndex > -1) todasLasTareas[tIndex].Estado = estado;
+
+                        fetch(API_URL, { method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify({ action: 'edit', id: id, estado: estado }) });
+                        
+                        const fC = document.getElementById('contador-' + evt.from.id.replace('columna-', ''));
+                        const tC = document.getElementById('contador-' + evt.to.id.replace('columna-', ''));
+                        if(fC) fC.innerText = Math.max(0, parseInt(fC.innerText) - 1);
+                        if(tC) tC.innerText = parseInt(tC.innerText) + 1;
+                    }
+                }
+            };
+            ['columna-pendiente', 'columna-en-progreso', 'columna-completado'].forEach(id => new Sortable(document.getElementById(id), config));
+        }
+
+        function abrirModalNueva() { document.getElementById('modal-nueva').classList.remove('oculto'); }
+        function cerrarModalNueva() { document.getElementById('modal-nueva').classList.add('oculto'); }
+
+        function abrirModalEdicion(id, descripcion, prioridad, estado) {
+            document.getElementById('edit-id').value = id;
+            document.getElementById('edit-descripcion').value = descripcion;
+            document.getElementById('edit-prioridad').value = prioridad || 'Media';
+            document.getElementById('edit-estado').value = estado || 'Pendiente';
+            document.getElementById('modal-edicion').classList.remove('oculto');
+        }
+        function cerrarModalEdicion() { document.getElementById('modal-edicion').classList.add('oculto'); }
+
+        async function guardarNueva() {
+            const desc = document.getElementById('add-descripcion').value;
+            if(!desc.trim()) return;
+            if (navigator.vibrate) navigator.vibrate(50);
+            
+            cerrarModalNueva();
+            document.getElementById('cargando').classList.remove('oculto');
+            document.getElementById('tablero').classList.add('oculto');
+            
+            await fetch(API_URL, { method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify({
+                action: 'add', descripcion: desc, clasificacion: document.getElementById('add-clasificacion').value, prioridad: document.getElementById('add-prioridad').value
+            })});
+            cargarTareas(); 
+        }
+
+        async function guardarEdicion() {
+            const id = document.getElementById('edit-id').value;
+            const nuevaDesc = document.getElementById('edit-descripcion').value;
+            const nuevaPrio = document.getElementById('edit-prioridad').value;
+            const nuevoEstado = document.getElementById('edit-estado').value;
+            
+            if (navigator.vibrate) navigator.vibrate(50);
+            cerrarModalEdicion();
+            
+            const tareaIndex = todasLasTareas.findIndex(t => String(t.ID) === String(id));
+            if (tareaIndex > -1) {
+                todasLasTareas[tareaIndex]['Audio Transcrito'] = nuevaDesc;
+                todasLasTareas[tareaIndex].Prioridad = nuevaPrio;
+                todasLasTareas[tareaIndex].Estado = nuevoEstado;
+                renderizarTareas(); 
+            }
+            
+            await fetch(API_URL, { method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify({ action: 'edit', id: id, descripcion: nuevaDesc, prioridad: nuevaPrio, estado: nuevoEstado }) });
+        }
+
+        async function archivarCompletadas() {
+            if(!confirm('¿Limpiar tareas completadas?')) return;
+            const completadas = todasLasTareas.filter(t => t.Estado === 'Completado' && t.ID);
+            completadas.forEach(t => t.Estado = 'Archivado');
+            renderizarTareas();
+            for(let t of completadas) fetch(API_URL, { method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify({ action: 'edit', id: t.ID, estado: 'Archivado' }) });
+        }
+
+        function filtrarVista() { renderizarTareas(); }
+        window.onload = cargarTareas;
+    </script>
+</body>
+</html>
