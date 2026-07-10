@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -24,6 +24,15 @@
         .sortable-drag { cursor: grabbing !important; transform: scale(1.03) rotate(2deg); }
         .oculto { display: none !important; }
         ::-webkit-scrollbar { width: 0px; background: transparent; } 
+        
+        /* Soporte para modo oscuro */
+        .dark body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+        .dark .bg-white { background-color: #1e293b; color: #f8fafc; }
+        .dark .text-gray-800 { color: #f1f5f9; }
+        .dark .text-gray-700 { color: #cbd5e1; }
+        .dark .bg-gray-100\/80 { background-color: #334155; border-color: #475569; }
+        .dark .border-gray-200 { border-color: #475569; }
+        .dark .bg-gray-50 { background-color: #0f172a; }
     </style>
 </head>
 <body class="text-gray-800 font-sans antialiased h-screen flex flex-col overflow-hidden pb-16 md:pb-0">
@@ -48,6 +57,10 @@
                 <button onclick="cargarTareas()" class="bg-white/20 hover:bg-white/30 p-2.5 rounded-xl transition w-10 h-10 flex items-center justify-center">
                     <i class="fa-solid fa-rotate-right"></i>
                 </button>
+                <button onclick="toggleDarkMode()" class="bg-white/20 hover:bg-white/30 p-2.5 rounded-xl transition w-10 h-10 flex items-center justify-center">
+                    <i id="icono-modo" class="fa-solid fa-moon"></i>
+                </button>
+                
             </div>
         </div>
         <div class="mt-4 relative z-10">
@@ -107,6 +120,10 @@
             <button onclick="verHistorial()" class="flex flex-col items-center text-gray-500 hover:text-clinica-500 w-16 transition">
                 <i class="fa-solid fa-box-archive text-xl mb-1"></i>
                 <span class="text-[10px] font-medium">Historial</span>
+            </button>
+            <button onclick="toggleDarkMode()" class="flex flex-col items-center text-gray-500 hover:text-clinica-500 w-16 transition">
+                <i id="icono-modo-mobile" class="fa-solid fa-moon text-xl mb-1"></i>
+                <span class="text-[10px] font-medium">Tema</span>
             </button>
         </div>
     </nav>
@@ -404,6 +421,25 @@
         
         // --- EL NUEVO "GATILLO" ANTI-BLOQUEOS ---
         document.addEventListener('DOMContentLoaded', cargarTareas);
+
+        // --- LÓGICA DE MODO OSCURO ---
+        function toggleDarkMode() {
+        const isDark = document.documentElement.classList.toggle('dark');
+        localStorage.setItem('darkMode', isDark);
+        actualizarIconos(isDark);
+        }
+
+        function actualizarIconos(isDark) {
+        const icono = isDark ? 'fa-sun' : 'fa-moon';
+        document.getElementById('icono-modo').className = `fa-solid ${icono}`;
+        document.getElementById('icono-modo-mobile').className = `fa-solid ${icono} text-xl mb-1`;
+        }
+
+        // Cargar preferencia al iniciar
+        if (localStorage.getItem('darkMode') === 'true') {
+        document.documentElement.classList.add('dark');
+        actualizarIconos(true);
+        }
     </script>
 </body>
 </html>
