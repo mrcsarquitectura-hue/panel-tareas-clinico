@@ -175,6 +175,10 @@
                 <button onclick="cerrarModalNueva()" class="px-5 py-3 md:py-2.5 text-gray-600 font-medium bg-gray-100 hover:bg-gray-200 rounded-xl w-full md:w-auto transition">Cancelar</button>
                 <button onclick="guardarNueva()" class="px-5 py-3 md:py-2.5 bg-gradient-to-r from-clinica-500 to-clinica-600 hover:from-clinica-600 hover:to-clinica-700 text-white font-medium rounded-xl shadow-md w-full md:w-auto transition">Guardar</button>
             </div>
+            <div class="mb-4">
+                <label class="block text-sm font-semibold mb-1.5 text-gray-700">Fecha y Hora Límite</label>
+                <input type="datetime-local" id="add-fecha-limite" class="w-full border-gray-200 rounded-xl p-2.5 bg-gray-50 border focus:outline-none">
+            </div>
         </div>
     </div>
 
@@ -205,16 +209,18 @@
                 </select>
             </div>
         </div>
-        
         <div class="flex justify-between gap-3">
             <button onclick="eliminarTarea()" class="px-5 py-3 md:py-2.5 text-red-600 font-medium bg-red-50 hover:bg-red-100 rounded-xl transition">
                 <i class="fa-solid fa-trash"></i>
             </button>
-            
             <div class="flex gap-3">
                 <button onclick="cerrarModalEdicion()" class="px-5 py-3 md:py-2.5 text-gray-600 font-medium bg-gray-100 hover:bg-gray-200 rounded-xl w-full md:w-auto transition">Cancelar</button>
                 <button onclick="guardarEdicion()" class="px-5 py-3 md:py-2.5 bg-gradient-to-r from-clinica-500 to-clinica-600 text-white font-medium rounded-xl shadow-md w-full md:w-auto transition">Guardar</button>
             </div>
+        </div>
+            <div class="mb-4">
+            <label class="block text-sm font-semibold mb-1.5 text-gray-700">Fecha y Hora Límite</label>
+            <input type="datetime-local" id="add-fecha-limite" class="w-full border-gray-200 rounded-xl p-2.5 bg-gray-50 border focus:outline-none">
         </div>
     </div>
 </div>
@@ -380,7 +386,7 @@
             document.getElementById('tablero').classList.add('oculto');
             
             await fetch(API_URL, { method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify({
-                action: 'add', descripcion: desc, clasificacion: document.getElementById('add-clasificacion').value, prioridad: document.getElementById('add-prioridad').value
+                action: 'add', descripcion: desc, clasificacion: document.getElementById('add-clasificacion').value, prioridad: document.getElementById('add-prioridad').value, fechaLimite: document.getElementById('add-fecha-limite').value
             })});
             cargarTareas(); 
         }
