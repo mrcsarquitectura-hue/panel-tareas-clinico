@@ -38,6 +38,13 @@
         .dark .bg-gray-100\/80 { background-color: #334155; border-color: #475569; }
         .dark .border-gray-200 { border-color: #475569; }
         .dark .bg-gray-50 { background-color: #0f172a; }
+
+        /* Esto evita la selección de texto accidental al intentar arrastrar */
+        .no-select {
+            -webkit-user-select: none; /* Safari */
+            -ms-user-select: none;     /* IE 10+ */
+            user-select: none;         /* Standard */
+        }
     </style>
 </head>
 <body class="text-gray-800 font-sans antialiased h-screen flex flex-col overflow-hidden pb-16 md:pb-0">
@@ -260,6 +267,7 @@
                 const safeDesc = (tarea['Audio Transcrito'] || '').replace(/'/g, "\\'").replace(/"/g, '&quot;'); 
                 
                 const tarjeta = `
+                    <div data-id="${tarea.ID}" class="no-select bg-white rounded-xl p-4 shadow-sm relative overflow-hidden mb-3 border border-gray-100 group transition">
                     <div data-id="${tarea.ID}" class="bg-white rounded-xl p-4 shadow-sm relative overflow-hidden mb-3 border border-gray-100 group transition">
                         <div class="absolute left-0 top-0 bottom-0 w-1.5 ${dec}"></div>
                         
@@ -321,7 +329,7 @@
 
         function inicializarDragAndDrop() {
             const config = {
-                group: 'kanban', animation: 250, delay: 200, delayOnTouchOnly: true, ghostClass: 'sortable-ghost', dragClass: 'sortable-drag',
+                group: 'kanban', animation: 250, delay: 200, delayOnTouchOnly: true, ghostClass: 'sortable-ghost', dragClass: 'sortable-drag', filter: 'input, textarea, button', preventOnFilter: true,
                 onEnd: function (evt) {
                     if (evt.from.id !== evt.to.id) {
                         if (navigator.vibrate) navigator.vibrate(50);
